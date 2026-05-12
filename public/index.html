@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RTP Signal</title>
+<style>
+:root{--g:#21ff79;--y:#ffe05a;--r:#ff4b4b;--m:#8fbd9c;--line:rgba(33,255,121,.2)}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top,#10301d,#020403 70%);color:#eafff2;font-family:Consolas,monospace}
+.wrap{max-width:1200px;margin:auto;padding:16px}.hero,.platformBox{border:1px solid var(--line);border-radius:18px;background:rgba(0,0,0,.45);box-shadow:0 0 45px rgba(33,255,121,.08);overflow:hidden}
+.bar{height:42px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:var(--m);font-size:12px}.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--g);box-shadow:0 0 12px var(--g);margin-right:7px}.dot:nth-child(2){background:var(--y)}.dot:nth-child(3){background:var(--r)}
+.head{padding:24px;display:grid;grid-template-columns:1.3fr .7fr;gap:18px}h1{font-size:clamp(34px,6vw,74px);line-height:.9;margin:8px 0;color:var(--g);text-shadow:0 0 25px rgba(33,255,121,.35)}h1 span{display:block;color:white}.lead{color:#bfeccf;line-height:1.55}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{border:1px solid rgba(33,255,121,.18);border-radius:14px;padding:14px;background:rgba(33,255,121,.05)}.stat small{display:block;color:var(--m);margin-bottom:8px}.stat strong{font-size:25px}
+.platformBox{margin:16px 0;padding:18px}.platformHead{display:flex;gap:14px;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;margin-bottom:14px}.platformHead h2{margin:0;color:var(--g);font-size:20px}.platformHead p{margin:6px 0 0;color:var(--m);font-size:13px;line-height:1.4}
+.mainPlatform{border:1px solid rgba(33,255,121,.4);border-radius:16px;background:linear-gradient(135deg,rgba(33,255,121,.16),rgba(0,0,0,.25));padding:14px;margin-bottom:14px;display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.mainPlatform strong{font-size:22px;color:white}.mainPlatform small{display:block;color:var(--m);margin-top:4px}.mainPlatform a,.registerBtn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:12px;padding:12px 15px;background:linear-gradient(135deg,var(--g),#c7ffd7);color:#031007;text-decoration:none;font-weight:900;text-transform:uppercase}
+.platformGrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}.platformItem{border:1px solid rgba(33,255,121,.14);border-radius:12px;padding:10px;background:rgba(33,255,121,.04);min-height:86px}.platformItem.principal{border-color:rgba(33,255,121,.55);box-shadow:0 0 18px rgba(33,255,121,.09)}.platformItem img{width:34px;height:34px;object-fit:contain;border-radius:8px;background:rgba(255,255,255,.08);margin-bottom:8px}.platformItem b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.platformItem span{display:block;margin-top:6px;font-size:11px;color:var(--m)}.platformItem a{display:inline-block;margin-top:8px;color:var(--g);font-size:11px;text-decoration:none}.platformItem.disabled{opacity:.55}
+.filters{display:grid;grid-template-columns:1fr .7fr .7fr auto;gap:10px;margin:16px 0}input,select,button{background:rgba(0,0,0,.45);border:1px solid rgba(33,255,121,.25);color:#eafff2;border-radius:12px;padding:13px;font:inherit}button{cursor:pointer;color:#031007;background:linear-gradient(135deg,var(--g),#c7ffd7);font-weight:900}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}.card{border:1px solid rgba(33,255,121,.15);border-radius:16px;overflow:hidden;background:linear-gradient(#0a1d12,#020403);box-shadow:0 14px 38px rgba(0,0,0,.34)}.card.hot{border-color:rgba(33,255,121,.5)}.thumb{width:100%;aspect-ratio:1/.72;object-fit:cover;display:block}.body{padding:11px}.name{font-weight:900;margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.row{display:flex;justify-content:space-between;align-items:flex-end}.rtp{font-size:30px;font-weight:900;color:var(--g)}.tag{font-size:11px;font-weight:900}.tag.high{color:var(--g)}.tag.medium{color:var(--y)}.tag.low{color:var(--r)}.prog{height:9px;background:rgba(255,255,255,.1);border-radius:99px;margin-top:8px;overflow:hidden}.prog div{height:100%}.prog .high{background:var(--g)}.prog .medium{background:var(--y)}.prog .low{background:var(--r)}.play{display:block;text-align:center;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:9px;color:var(--g);text-decoration:none;font-size:12px;font-weight:900}
+.warn{margin-top:18px;color:var(--m);font-size:12px;text-align:center;line-height:1.6}
+@media(max-width:1000px){.platformGrid{grid-template-columns:repeat(4,1fr)}.grid{grid-template-columns:repeat(4,1fr)}}@media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}.head{grid-template-columns:1fr}.filters{grid-template-columns:1fr}}@media(max-width:560px){.grid,.platformGrid{grid-template-columns:repeat(2,1fr)}.wrap{padding:9px}.rtp{font-size:26px}.mainPlatform strong{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<section class="hero">
+<div class="bar"><div><span class="dot"></span><span class="dot"></span><span class="dot"></span> root@rtpsignal:~$ github-sync</div><div id="status">SYNC...</div></div>
+<div class="head">
+<div><p style="color:var(--m)">[ RTP SIGNAL ] atualizado por GitHub Actions</p><h1>RTP ONLINE<span>PGSOFT</span></h1><p class="lead">O Render fica leve. A busca pesada roda fora dele em intervalos programados, e o site lê a base atualizada.</p></div>
+<div class="stats"><div class="stat"><small>JOGOS</small><strong id="total">0</strong></div><div class="stat"><small>HOT</small><strong id="hot">0</strong></div><div class="stat"><small>MELHOR</small><strong id="best">0%</strong></div><div class="stat"><small>SYNC</small><strong id="time">--:--</strong></div></div>
+</div>
+</section>
+
+<section class="platformBox">
+  <div class="platformHead">
+    <div>
+      <h2>▼ Plataformas POP</h2>
+      <p>O site lista as 24 plataformas e usa sempre a principal marcada como última lançada.</p>
+    </div>
+    <a class="registerBtn" id="heroRegister" href="#" target="_blank" rel="noopener">Registrar na principal</a>
+  </div>
+  <div class="mainPlatform" id="mainPlatform"></div>
+  <div class="platformGrid" id="platformGrid"></div>
+</section>
+
+<div class="filters"><input id="q" placeholder="buscar jogo..."><select id="filter"><option value="all">TODOS</option><option value="high">HOT</option><option value="medium">MÉDIO</option><option value="low">BAIXO</option></select><select id="sort"><option value="desc">MAIOR RTP</option><option value="asc">MENOR RTP</option><option value="default">ORDEM PADRÃO</option></select><a class="registerBtn" id="filterRegister" href="#" target="_blank" rel="noopener">Jogar na principal</a></div>
+<div class="grid" id="grid"></div>
+<div class="warn">18+ · RTP informativo, não garante ganhos ou resultados. Jogue com responsabilidade.</div>
+</div>
+<script>
+let dados=[], plataformas=[], principal={link:'#',nome:'Principal'};
+const grid=document.getElementById('grid'), q=document.getElementById('q'), filter=document.getElementById('filter'), sort=document.getElementById('sort');
+function val(x){return Number(String(x||'').replace('%',''))||0}
+function lvl(v){return v>=75?'high':v>=50?'medium':'low'}
+function label(l){return l==='high'?'HOT':l==='medium'?'MÉDIO':'BAIXO'}
+function safeLink(p){return p&&p.link&&p.link!=='#'?p.link:'#'}
+function renderPlatforms(){
+  document.getElementById('heroRegister').href=safeLink(principal);
+  document.getElementById('filterRegister').href=safeLink(principal);
+  document.getElementById('mainPlatform').innerHTML=`<div><strong>${principal.nome||'Plataforma principal'}</strong><small>Marcada como última lançada / principal para os botões do site</small></div><a href="${safeLink(principal)}" target="_blank" rel="noopener">Acessar principal</a>`;
+  document.getElementById('platformGrid').innerHTML=plataformas.map((p,i)=>`<div class="platformItem ${p.principal?'principal':''} ${p.link==='#'?'disabled':''}">${p.logo?`<img src="${p.logo}" alt="">`:''}<b>${String(i+1).padStart(2,'0')} · ${p.nome}</b><span>${p.principal?'ÚLTIMA LANÇADA':(p.status||'online')}</span><a href="${safeLink(p)}" target="_blank" rel="noopener">${p.link==='#'?'aguardando link':'abrir plataforma'}</a></div>`).join('');
+}
+function render(){
+ let list=dados.map((x,i)=>({...x,nome:x.nome||`Jogo PGSoft ${i+1}`,value:val(x.rtp),idx:i})).filter(x=>x.nome.toLowerCase().includes(q.value.toLowerCase())&&(filter.value==='all'||filter.value===lvl(x.value)));
+ if(sort.value==='desc')list.sort((a,b)=>b.value-a.value); if(sort.value==='asc')list.sort((a,b)=>a.value-b.value); if(sort.value==='default')list.sort((a,b)=>a.idx-b.idx);
+ grid.innerHTML=list.map(x=>{const l=lvl(x.value);return `<article class="card ${l==='high'?'hot':''}"><img class="thumb" src="${x.imagem}" loading="lazy"><div class="body"><div class="name">${x.nome}</div><div class="row"><div class="rtp">${x.rtp}</div><div class="tag ${l}">${label(l)}</div></div><div class="prog"><div class="${l}" style="width:${Math.min(x.value,100)}%"></div></div><a class="play" href="${safeLink(principal)}" target="_blank" rel="noopener">Jogar agora</a></div></article>`}).join('');
+ const values=dados.map(x=>val(x.rtp)); document.getElementById('total').textContent=dados.length; document.getElementById('hot').textContent=dados.filter(x=>val(x.rtp)>=75).length; document.getElementById('best').textContent=(values.length?Math.max(...values):0)+'%'; document.getElementById('time').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+async function loadPlatforms(){const r=await fetch('/api/platforms?t='+Date.now());const data=await r.json();plataformas=data.plataformas||[];principal=data.principal||plataformas[plataformas.length-1]||principal;renderPlatforms()}
+async function load(){const r=await fetch('/api/rtp-pgsoft?t='+Date.now());dados=await r.json();document.getElementById('status').textContent='● ONLINE';render()}
+q.oninput=render;filter.onchange=render;sort.onchange=render;Promise.all([loadPlatforms(),load()]).then(()=>render());setInterval(load,60000);
+</script>
+</body>
+</html>

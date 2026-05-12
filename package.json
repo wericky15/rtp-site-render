@@ -1,0 +1,12 @@
+{
+  "name": "rtp-site-limpo-sem-erro",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "latest",
+    "express": "latest"
+  }
+}
