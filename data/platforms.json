@@ -1,194 +1,202 @@
 [
   {
-    "id": "pop-principal",
-    "nome": "POP Principal",
-    "link": "#",
-    "logo": "",
+    "id": "popbra",
+    "nome": "POPBRA",
+    "link": "https://www.popbra-3.com/#/register?invitationCode=wj6hh1188581",
+    "logo": "/logos/01-popbra.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "26bet",
+    "nome": "26BET",
+    "link": "https://b26bet.com/?id=862440159",
+    "logo": "/logos/02-26bet.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "pop888",
+    "nome": "POP888",
+    "link": "https://www.pop888-3.com/#/register?invitationCode=167262733",
+    "logo": "/logos/03-pop888.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popkkk",
+    "nome": "POPKKK",
+    "link": "https://www.popkkk.com/?id=489459906",
+    "logo": "/logos/04-popkkk.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "pop678",
+    "nome": "POP678",
+    "link": "https://www.pop67833.com/#/register?invitationCode=777719203",
+    "logo": "/logos/05-pop678.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "poppg",
+    "nome": "POPPG",
+    "link": "https://www.poppg88.com/#/register?invitationCode=8674821795",
+    "logo": "/logos/06-poppg.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "pop555",
+    "nome": "POP555",
+    "link": "https://www.pop55511.com/#/register?invitationCode=82148102717",
+    "logo": "/logos/07-pop555.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "poplua",
+    "nome": "POPLUA",
+    "link": "https://www.poplua4.com/#/register?invitationCode=33566103921",
+    "logo": "/logos/08-poplua.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popwb",
+    "nome": "POPWB",
+    "link": "https://ugmmxv.com/?pid=1352729166",
+    "logo": "/logos/09-popwb.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popbem",
+    "nome": "POPBEM",
+    "link": "https://www.popbem33.com/#/register?invitationCode=32434105625",
+    "logo": "/logos/10-popbem.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popmel",
+    "nome": "POPMEL",
+    "link": "https://ramkqg.com/?pid=1459266606",
+    "logo": "/logos/11-popmel.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popceu",
+    "nome": "POPCEU",
+    "link": "https://www.popceuaa.com/#/register?invitationCode=42657105438",
+    "logo": "/logos/12-popceu.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popdez",
+    "nome": "POPDEZ",
+    "link": "https://popdezoz.com/?pid=2830946589",
+    "logo": "/logos/13-popdez.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popboa",
+    "nome": "POPBOA",
+    "link": "https://z64kc9.com/?pid=2787392687",
+    "logo": "/logos/14-popboa.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popflu",
+    "nome": "POPFLU",
+    "link": "https://3popflu.com/?pid=3013422955",
+    "logo": "/logos/15-popflu.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popbis",
+    "nome": "POPBIS",
+    "link": "https://1popbis.com/?pid=3337634160",
+    "logo": "/logos/16-popbis.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popn1",
+    "nome": "POPN1",
+    "link": "https://00popn1.com/?pid=3779132759",
+    "logo": "/logos/17-popn1.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popvai",
+    "nome": "POPVAI",
+    "link": "https://01popvai.com/?pid=3291819190",
+    "logo": "/logos/18-popvai.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popluz",
+    "nome": "POPLUZ",
+    "link": "https://22popluz.com/?pid=3824339719",
+    "logo": "/logos/19-popluz.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popzoe",
+    "nome": "POPZOE",
+    "link": "https://33popzoe.com/?pid=2949954711",
+    "logo": "/logos/20-popzoe.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popsur",
+    "nome": "POPSUR",
+    "link": "https://11popsur.com/?pid=1269757570",
+    "logo": "/logos/21-popsur.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popbea",
+    "nome": "POPBEA",
+    "link": "https://22popbea.com/?pid=3681591592",
+    "logo": "/logos/22-popbea.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popfoi",
+    "nome": "POPFOI",
+    "link": "https://33popfoi.com/?pid=3978005850",
+    "logo": "/logos/23-popfoi.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "poptig",
+    "nome": "POPTIG",
+    "link": "https://66poptig.com/?pid=1403904093",
+    "logo": "/logos/24-poptig.png",
+    "status": "online",
+    "principal": false
+  },
+  {
+    "id": "popnov",
+    "nome": "POPNOV",
+    "link": "https://22popnov.com/?pid=1886776055",
+    "logo": "/logos/25-popnov.png",
     "status": "ultima_lancada",
     "principal": true
-  },
-  {
-    "id": "pop-02",
-    "nome": "Plataforma POP 02",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-03",
-    "nome": "Plataforma POP 03",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-04",
-    "nome": "Plataforma POP 04",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-05",
-    "nome": "Plataforma POP 05",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-06",
-    "nome": "Plataforma POP 06",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-07",
-    "nome": "Plataforma POP 07",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-08",
-    "nome": "Plataforma POP 08",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-09",
-    "nome": "Plataforma POP 09",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-10",
-    "nome": "Plataforma POP 10",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-11",
-    "nome": "Plataforma POP 11",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-12",
-    "nome": "Plataforma POP 12",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-13",
-    "nome": "Plataforma POP 13",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-14",
-    "nome": "Plataforma POP 14",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-15",
-    "nome": "Plataforma POP 15",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-16",
-    "nome": "Plataforma POP 16",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-17",
-    "nome": "Plataforma POP 17",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-18",
-    "nome": "Plataforma POP 18",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-19",
-    "nome": "Plataforma POP 19",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-20",
-    "nome": "Plataforma POP 20",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-21",
-    "nome": "Plataforma POP 21",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-22",
-    "nome": "Plataforma POP 22",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-23",
-    "nome": "Plataforma POP 23",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
-  },
-  {
-    "id": "pop-24",
-    "nome": "Plataforma POP 24",
-    "link": "#",
-    "logo": "",
-    "status": "aguardando_link",
-    "principal": false
   }
 ]
