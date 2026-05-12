@@ -1,0 +1,64 @@
+name: Atualizar RTP PGSoft
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: atualizar-rtp-pgsoft
+  cancel-in-progress: true
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar repositorio
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Preparar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Puppeteer apenas no GitHub Actions
+        run: npm install puppeteer --no-save
+
+      - name: Buscar RTPs online
+        run: node scripts/scrape-rtp.js
+
+      - name: Salvar alteracoes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add data/rtp-pgsoft.json
+
+          if git diff --cached --quiet; then
+            echo "Sem alteracoes nos RTPs."
+            exit 0
+          fi
+
+          git commit -m "Atualiza RTP PGSoft"
+
+          for tentativa in 1 2 3; do
+            echo "Tentativa de push: $tentativa"
+
+            if git push origin HEAD:main; then
+              echo "Push concluido."
+              exit 0
+            fi
+
+            echo "Push falhou. Atualizando base e tentando de novo..."
+            git pull --rebase origin main || (git rebase --abort || true)
+          done
+
+          echo "Nao foi possivel salvar as alteracoes depois de 3 tentativas."
+          exit 1
