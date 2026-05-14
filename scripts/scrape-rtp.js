@@ -6,7 +6,7 @@ const OUTPUT = './data/rtp-pgsoft.json';
 const FONTES = [
   {
     nome: 'Porcentagem Slots PGSoft',
-    url: 'https://porcentagem-slots.com/',
+    url: 'https://porcentagem-slots.com/pgsoft',
     tipo: 'porcentagem-slots'
   },
   {
@@ -24,6 +24,10 @@ function normalizarRtp(texto) {
   return `${numero}%`;
 }
 
+function limparNome(nome) {
+  return String(nome || '').replace(/\s+/g, ' ').trim();
+}
+
 function chave(texto) {
   return String(texto || '')
     .normalize('NFD')
@@ -31,10 +35,6 @@ function chave(texto) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
-}
-
-function limparNome(nome) {
-  return String(nome || '').replace(/\s+/g, ' ').trim();
 }
 
 function removerDuplicados(lista) {
@@ -59,87 +59,77 @@ async function aceitarIdadeSeAparecer(page) {
       if (botoes[0]) botoes[0].click();
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    await new Promise(resolve => setTimeout(resolve, 1000));
   } catch {}
 }
 
 async function buscarPorcentagemSlots(page, fonte) {
   await page.goto(fonte.url, {
-    waitUntil: 'networkidle2',
+    waitUntil: 'domcontentloaded',
     timeout: 70000
   });
 
   await aceitarIdadeSeAparecer(page);
 
-  const dados = await page.evaluate(() => {
-    const normalizar = texto => String(texto || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim();
+  await page.waitForFunction(() => {
+    const texto = document.body?.innerText || '';
+    return texto.includes('%') && document.querySelectorAll('img').length > 20;
+  }, { timeout: 30000 });
 
+  const dados = await page.evaluate(() => {
     const limpar = texto => String(texto || '').replace(/\s+/g, ' ').trim();
 
-    const bloqueados = new Set([
-      'rtp pg soft', 'slots patrocinados', 'pg soft', 'pragmatic play',
-      'reel kingdom', 'playtech', 'fa chai', 'jili', 'jdb', 'cq9 gaming',
-      'microgaming', 'rtg slots', 'onetouch', 'play n go', 'yggdrasil',
-      'flow gaming', 'betsoft', 'astrotech', 'funky games', 'ttg slot',
-      'habanero', 'spadegaming', 'playstar', 'live22', 'joker', 'ion slot',
-      'slot88', 'crowd play', 'avantplay', 'mostrar mais', 'mostrar menos',
-      'sim', 'nao', 'não', 'link copiado', 'publi', 'inicio', 'início', 'ajuda'
-    ]);
-
-    const aviso = /jogue com responsabilidade|apostar pode|aposta nao|aposta não|maiores de 18|verificacao de idade|verificação de idade/i;
-
-    const imagens = new Map(
-      [...document.querySelectorAll('img')]
-        .map(img => {
-          const alt = limpar(img.alt || img.title || img.getAttribute('aria-label') || '');
-          const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-          return [normalizar(alt), { alt, src }];
-        })
-        .filter(([k, v]) => k && v.src && !/moeda|instagram|maiores|idade|logo/i.test(v.alt))
-    );
-
-    const linhas = (document.body.innerText || '')
-      .split('\n')
-      .map(limpar)
-      .filter(Boolean);
+    const isNomeRuim = (nome) => {
+      const n = limpar(nome).toLowerCase();
+      if (!n || n.length < 3) return true;
+      if (/^\d{1,3}%$/.test(n)) return true;
+      if (n === 'moeda') return true;
+      if (n.includes('maiores de 18')) return true;
+      if (n.includes('jogue com responsabilidade')) return true;
+      if (n.includes('apostar')) return true;
+      if (n.includes('link copiado')) return true;
+      if (n.includes('instagram')) return true;
+      return false;
+    };
 
     const itens = [];
 
-    for (let i = 0; i < linhas.length; i++) {
-      const nome = limpar(linhas[i]);
-      const nomeKey = normalizar(nome);
+    for (const img of [...document.querySelectorAll('img')]) {
+      const nome = limpar(img.alt || img.title || img.getAttribute('aria-label') || '');
+      const imagem = img.currentSrc || img.src || img.getAttribute('data-src') || '';
 
-      if (!nome || nome.length < 3) continue;
-      if (bloqueados.has(nomeKey)) continue;
-      if (aviso.test(nome)) continue;
-      if (/^\d{1,3}%$/.test(nome)) continue;
-      if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(nome)) continue;
+      if (isNomeRuim(nome) || !imagem) continue;
 
+      let atual = img;
       let rtp = '';
 
-      for (let j = i + 1; j <= i + 6 && j < linhas.length; j++) {
-        const linha = linhas[j];
-        if (aviso.test(linha)) continue;
-
-        const achou = linha.match(/\b([0-9]{1,3})%\b/);
+      for (let subida = 0; subida < 6 && atual && !rtp; subida++) {
+        const txt = atual.innerText || atual.parentElement?.innerText || '';
+        const achou = txt.match(/\b([0-9]{1,3})%\b/);
         if (achou) {
           const n = Number(achou[1]);
           if (n >= 1 && n <= 100) rtp = `${n}%`;
-          break;
+        }
+
+        atual = atual.parentElement;
+      }
+
+      if (!rtp) {
+        const todos = (document.body.innerText || '').split('\n').map(limpar).filter(Boolean);
+        const idx = todos.findIndex(l => l === nome);
+        if (idx >= 0) {
+          for (let i = idx + 1; i <= idx + 5 && i < todos.length; i++) {
+            const achou = todos[i].match(/\b([0-9]{1,3})%\b/);
+            if (achou) {
+              const n = Number(achou[1]);
+              if (n >= 1 && n <= 100) rtp = `${n}%`;
+              break;
+            }
+          }
         }
       }
 
-      if (!rtp) continue;
-
-      const img = imagens.get(nomeKey);
-      if (!img || !img.src) continue;
-
-      itens.push({ nome, imagem: img.src, rtp });
+      if (rtp) itens.push({ nome, imagem, rtp });
     }
 
     return itens;
@@ -195,6 +185,16 @@ async function buscarPop555(page, fonte) {
   );
 }
 
+function carregarJsonAtual() {
+  try {
+    if (!fs.existsSync(OUTPUT)) return [];
+    const atual = JSON.parse(fs.readFileSync(OUTPUT, 'utf-8'));
+    return Array.isArray(atual) ? atual : [];
+  } catch {
+    return [];
+  }
+}
+
 let browser;
 
 try {
@@ -216,7 +216,7 @@ try {
 
   for (const fonte of FONTES) {
     try {
-      console.log(`Tentando fonte: ${fonte.nome}`);
+      console.log(`Tentando fonte: ${fonte.nome} - ${fonte.url}`);
 
       if (fonte.tipo === 'porcentagem-slots') {
         resultado = await buscarPorcentagemSlots(page, fonte);
@@ -224,19 +224,26 @@ try {
         resultado = await buscarPop555(page, fonte);
       }
 
+      console.log(`Fonte ${fonte.nome} retornou ${resultado.length} jogos.`);
+
       if (resultado.length >= 20) {
         fonteUsada = fonte.nome;
         break;
       }
-
-      console.log(`Fonte ${fonte.nome} retornou poucos jogos: ${resultado.length}`);
     } catch (erroFonte) {
       console.error(`Fonte falhou: ${fonte.nome}`, erroFonte.message);
     }
   }
 
   if (!resultado.length) {
-    throw new Error('Nenhuma fonte retornou jogos suficientes.');
+    const atual = carregarJsonAtual();
+
+    if (atual.length) {
+      console.log('Nenhuma fonte atualizou. Mantendo JSON atual para nao quebrar o site.');
+      process.exit(0);
+    }
+
+    throw new Error('Nenhuma fonte retornou jogos suficientes e nao existe JSON atual.');
   }
 
   fs.mkdirSync('./data', { recursive: true });
