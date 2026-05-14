@@ -7,14 +7,27 @@ const FONTES = [
   {
     nome: 'Porcentagem Slots PGSoft',
     url: 'https://porcentagem-slots.com/pgsoft',
-    tipo: 'porcentagem-slots'
+    tipo: 'porcentagem-slots-texto'
   },
   {
     nome: 'POP555 PGSoft',
     url: 'https://pop555.net/rtp-pgsoft/',
-    tipo: 'pop555'
+    tipo: 'pop555-texto'
   }
 ];
+
+function limparTexto(texto) {
+  return String(texto || '').replace(/\s+/g, ' ').trim();
+}
+
+function normalizarChave(texto) {
+  return String(texto || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
 
 function normalizarRtp(texto) {
   const encontrado = String(texto || '').match(/\b([0-9]{1,3})%\b/);
@@ -24,17 +37,8 @@ function normalizarRtp(texto) {
   return `${numero}%`;
 }
 
-function limparNome(nome) {
-  return String(nome || '').replace(/\s+/g, ' ').trim();
-}
-
-function chave(texto) {
-  return String(texto || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim();
+function imagemPadrao(index) {
+  return `https://cadastro.popboaa.com/assets/rtp/pgsoft/POPBRA-PGSOFT${index}.webp`;
 }
 
 function removerDuplicados(lista) {
@@ -42,9 +46,9 @@ function removerDuplicados(lista) {
   const saida = [];
 
   for (const item of lista) {
-    const k = chave(item.nome);
-    if (!k || vistos.has(k)) continue;
-    vistos.add(k);
+    const chave = normalizarChave(item.nome);
+    if (!chave || vistos.has(chave)) continue;
+    vistos.add(chave);
     saida.push(item);
   }
 
@@ -54,16 +58,119 @@ function removerDuplicados(lista) {
 async function aceitarIdadeSeAparecer(page) {
   try {
     await page.evaluate(() => {
-      const botoes = [...document.querySelectorAll('button, a, div, span')]
-        .filter(el => (el.innerText || '').trim().toLowerCase() === 'sim');
-      if (botoes[0]) botoes[0].click();
+      const possiveis = [...document.querySelectorAll('button, a, div, span')]
+        .filter(el => {
+          const txt = (el.innerText || '').trim().toLowerCase();
+          return txt === 'sim' || txt === 'tenho mais de 18 anos' || txt.includes('maior de 18');
+        });
+
+      if (possiveis[0]) possiveis[0].click();
     });
 
     await new Promise(resolve => setTimeout(resolve, 1000));
   } catch {}
 }
 
-async function buscarPorcentagemSlots(page, fonte) {
+function nomeBloqueado(nome) {
+  const n = normalizarChave(nome);
+
+  if (!n || n.length < 3) return true;
+  if (/^[0-9]{1,3}%$/.test(n)) return true;
+  if (/^[0-9]{1,2} [0-9]{1,2} [0-9]{4}/.test(n)) return true;
+
+  const bloqueios = [
+    'rtp pg soft',
+    'slots patrocinados',
+    'pg soft',
+    'pragmatic play',
+    'reel kingdom',
+    'playtech',
+    'fa chai',
+    'jili',
+    'jdb',
+    'cq9 gaming',
+    'microgaming',
+    'rtg slots',
+    'onetouch',
+    'play n go',
+    'yggdrasil',
+    'flow gaming',
+    'betsoft',
+    'astrotech',
+    'funky games',
+    'ttg slot',
+    'habanero',
+    'spadegaming',
+    'playstar',
+    'live22',
+    'joker',
+    'ion slot',
+    'slot88',
+    'crowd play',
+    'avantplay',
+    'mostrar mais',
+    'mostrar menos',
+    'jogue com responsabilidade',
+    'verificacao de idade',
+    'verificacao',
+    'este site so pode',
+    'voce tem mais de 18 anos',
+    'sim nao',
+    'nao compartilhe',
+    'link copiado',
+    'publi',
+    'moeda',
+    'inicio',
+    'ajuda',
+    'instagram',
+    'copyright'
+  ];
+
+  return bloqueios.some(b => n.includes(b));
+}
+
+function extrairPorLinhas(linhas, fonteNome) {
+  const itens = [];
+
+  for (let i = 0; i < linhas.length; i++) {
+    let nome = limparTexto(linhas[i]);
+
+    if (nome.startsWith('######')) {
+      nome = limparTexto(nome.replace(/^#+/, ''));
+    }
+
+    if (nomeBloqueado(nome)) continue;
+
+    let rtp = '';
+
+    for (let j = i + 1; j <= i + 8 && j < linhas.length; j++) {
+      const linha = limparTexto(linhas[j]);
+
+      if (!linha) continue;
+      if (nomeBloqueado(linha) && !/\b[0-9]{1,3}%\b/.test(linha)) continue;
+
+      const achou = normalizarRtp(linha);
+      if (achou) {
+        rtp = achou;
+        break;
+      }
+    }
+
+    if (!rtp) continue;
+
+    itens.push({
+      nome,
+      imagem: imagemPadrao(itens.length + 1),
+      rtp,
+      atualizado_em: new Date().toISOString(),
+      fonte: fonteNome
+    });
+  }
+
+  return removerDuplicados(itens);
+}
+
+async function buscarPorcentagemSlotsTexto(page, fonte) {
   await page.goto(fonte.url, {
     waitUntil: 'domcontentloaded',
     timeout: 70000
@@ -73,91 +180,34 @@ async function buscarPorcentagemSlots(page, fonte) {
 
   await page.waitForFunction(() => {
     const texto = document.body?.innerText || '';
-    return texto.includes('%') && document.querySelectorAll('img').length > 20;
+    return texto.includes('%') && texto.toLowerCase().includes('pg soft');
   }, { timeout: 30000 });
 
-  const dados = await page.evaluate(() => {
-    const limpar = texto => String(texto || '').replace(/\s+/g, ' ').trim();
-
-    const isNomeRuim = (nome) => {
-      const n = limpar(nome).toLowerCase();
-      if (!n || n.length < 3) return true;
-      if (/^\d{1,3}%$/.test(n)) return true;
-      if (n === 'moeda') return true;
-      if (n.includes('maiores de 18')) return true;
-      if (n.includes('jogue com responsabilidade')) return true;
-      if (n.includes('apostar')) return true;
-      if (n.includes('link copiado')) return true;
-      if (n.includes('instagram')) return true;
-      return false;
-    };
-
-    const itens = [];
-
-    for (const img of [...document.querySelectorAll('img')]) {
-      const nome = limpar(img.alt || img.title || img.getAttribute('aria-label') || '');
-      const imagem = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-
-      if (isNomeRuim(nome) || !imagem) continue;
-
-      let atual = img;
-      let rtp = '';
-
-      for (let subida = 0; subida < 6 && atual && !rtp; subida++) {
-        const txt = atual.innerText || atual.parentElement?.innerText || '';
-        const achou = txt.match(/\b([0-9]{1,3})%\b/);
-        if (achou) {
-          const n = Number(achou[1]);
-          if (n >= 1 && n <= 100) rtp = `${n}%`;
-        }
-
-        atual = atual.parentElement;
-      }
-
-      if (!rtp) {
-        const todos = (document.body.innerText || '').split('\n').map(limpar).filter(Boolean);
-        const idx = todos.findIndex(l => l === nome);
-        if (idx >= 0) {
-          for (let i = idx + 1; i <= idx + 5 && i < todos.length; i++) {
-            const achou = todos[i].match(/\b([0-9]{1,3})%\b/);
-            if (achou) {
-              const n = Number(achou[1]);
-              if (n >= 1 && n <= 100) rtp = `${n}%`;
-              break;
-            }
-          }
-        }
-      }
-
-      if (rtp) itens.push({ nome, imagem, rtp });
-    }
-
-    return itens;
+  const linhas = await page.evaluate(() => {
+    return (document.body.innerText || '')
+      .split('\n')
+      .map(l => l.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
   });
 
-  return removerDuplicados(
-    dados
-      .map((item, index) => ({
-        nome: limparNome(item.nome) || `Jogo PGSoft ${index + 1}`,
-        imagem: item.imagem,
-        rtp: normalizarRtp(item.rtp),
-        atualizado_em: new Date().toISOString(),
-        fonte: fonte.nome
-      }))
-      .filter(item => item.nome && item.imagem && item.rtp)
-  );
+  return extrairPorLinhas(linhas, fonte.nome);
 }
 
-async function buscarPop555(page, fonte) {
+async function buscarPop555Texto(page, fonte) {
   await page.goto(fonte.url, {
-    waitUntil: 'networkidle2',
+    waitUntil: 'domcontentloaded',
     timeout: 70000
   });
 
-  await page.waitForSelector('.card', { timeout: 30000 });
+  await page.waitForFunction(() => {
+    const texto = document.body?.innerText || '';
+    return texto.includes('%');
+  }, { timeout: 30000 });
 
-  const dados = await page.evaluate(() => {
-    return [...document.querySelectorAll('.card')]
+  const itensDOM = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll('.card, .card-content, .content, article, div')];
+
+    return cards
       .map((card, index) => {
         const img = card.querySelector('img');
         const texto = card.innerText || '';
@@ -172,17 +222,26 @@ async function buscarPop555(page, fonte) {
       .filter(item => item.imagem && item.rtp);
   });
 
-  return removerDuplicados(
-    dados
-      .map((item, index) => ({
-        nome: limparNome(item.nome) || `Jogo PGSoft ${index + 1}`,
-        imagem: item.imagem,
+  if (itensDOM.length >= 20) {
+    return removerDuplicados(
+      itensDOM.map((item, index) => ({
+        nome: item.nome || `Jogo PGSoft ${index + 1}`,
+        imagem: item.imagem || imagemPadrao(index + 1),
         rtp: normalizarRtp(item.rtp),
         atualizado_em: new Date().toISOString(),
         fonte: fonte.nome
-      }))
-      .filter(item => item.nome && item.imagem && item.rtp)
-  );
+      })).filter(item => item.rtp)
+    );
+  }
+
+  const linhas = await page.evaluate(() => {
+    return (document.body.innerText || '')
+      .split('\n')
+      .map(l => l.replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+  });
+
+  return extrairPorLinhas(linhas, fonte.nome);
 }
 
 function carregarJsonAtual() {
@@ -218,10 +277,10 @@ try {
     try {
       console.log(`Tentando fonte: ${fonte.nome} - ${fonte.url}`);
 
-      if (fonte.tipo === 'porcentagem-slots') {
-        resultado = await buscarPorcentagemSlots(page, fonte);
-      } else if (fonte.tipo === 'pop555') {
-        resultado = await buscarPop555(page, fonte);
+      if (fonte.tipo === 'porcentagem-slots-texto') {
+        resultado = await buscarPorcentagemSlotsTexto(page, fonte);
+      } else if (fonte.tipo === 'pop555-texto') {
+        resultado = await buscarPop555Texto(page, fonte);
       }
 
       console.log(`Fonte ${fonte.nome} retornou ${resultado.length} jogos.`);
