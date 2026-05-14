@@ -7,7 +7,7 @@ const FONTES = [
   {
     nome: 'Porcentagem Slots PGSoft',
     url: 'https://porcentagem-slots.com/pgsoft',
-    tipo: 'porcentagem-fetch'
+    tipo: 'porcentagem-html-blocos'
   },
   {
     nome: 'POP555 PGSoft',
@@ -100,11 +100,22 @@ function extrairAtributo(tag, attr) {
   return match ? decodeHtml(match[1]) : '';
 }
 
-function mapaImagensPorAlt(html) {
-  const mapa = new Map();
-  const tags = html.match(/<img\b[^>]*>/gi) || [];
+function stripTags(trecho) {
+  return decodeHtml(
+    String(trecho || '')
+      .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+  );
+}
 
-  for (const tag of tags) {
+function extrairImgs(html) {
+  const tags = [];
+  const re = /<img\b[^>]*>/gi;
+  let match;
+
+  while ((match = re.exec(html)) !== null) {
+    const tag = match[0];
     const alt = limparTexto(decodeHtml(
       extrairAtributo(tag, 'alt') ||
       extrairAtributo(tag, 'title') ||
@@ -120,91 +131,49 @@ function mapaImagensPorAlt(html) {
     if (!alt || !src) continue;
     if (nomeBloqueado(alt)) continue;
 
-    mapa.set(normalizarChave(alt), src);
+    tags.push({
+      nome: alt,
+      imagem: src,
+      inicio: match.index,
+      fim: re.lastIndex
+    });
   }
 
-  return mapa;
+  return tags;
 }
 
-function htmlParaLinhas(html) {
-  let texto = String(html || '');
-
-  texto = texto
-    .replace(/<script\b[\s\S]*?<\/script>/gi, '\n')
-    .replace(/<style\b[\s\S]*?<\/style>/gi, '\n')
-    .replace(/<noscript\b[\s\S]*?<\/noscript>/gi, '\n')
-    .replace(/<(br|hr)\b[^>]*>/gi, '\n')
-    .replace(/<\/(div|p|li|h1|h2|h3|h4|h5|h6|section|article|header|footer|span|a|button)>/gi, '\n')
-    .replace(/<[^>]+>/g, '\n');
-
-  texto = decodeHtml(texto);
-
-  return texto
-    .split('\n')
-    .map(limparTexto)
-    .filter(Boolean);
-}
-
-function tentarExtrairDaLinha(linha) {
-  const limpo = limparTexto(linha).replace(/^#+\s*/, '');
-  const match = limpo.match(/^(.{3,90}?)\s+\b([0-9]{1,3})%\b(?:\s|$)/);
-  if (!match) return null;
-
-  const nome = limparTexto(match[1]);
-  const rtp = normalizarRtp(match[2] + '%');
-
-  if (nomeBloqueado(nome) || !rtp) return null;
-  return { nome, rtp };
-}
-
-function extrairPorLinhas(linhas, imagens, fonteNome) {
+function extrairPorBlocosHtml(html, fonteNome) {
+  const imgs = extrairImgs(html);
   const itens = [];
 
-  for (let i = 0; i < linhas.length; i++) {
-    const linhaOriginal = limparTexto(linhas[i]);
-    if (!linhaOriginal) continue;
+  console.log(`Imagens candidatas: ${imgs.length}`);
+  console.log(`Primeiras imagens: ${imgs.slice(0, 8).map(x => x.nome).join(' | ')}`);
 
-    const direto = tentarExtrairDaLinha(linhaOriginal);
-    if (direto) {
-      const key = normalizarChave(direto.nome);
-      itens.push({
-        nome: direto.nome,
-        imagem: imagens.get(key) || imagemPadrao(itens.length + 1),
-        rtp: direto.rtp,
-        atualizado_em: new Date().toISOString(),
-        fonte: fonteNome
-      });
-      continue;
-    }
+  for (let i = 0; i < imgs.length; i++) {
+    const atual = imgs[i];
+    const proximo = imgs[i + 1];
 
-    let nome = linhaOriginal.replace(/^#+\s*/, '');
-    nome = limparTexto(nome);
+    const limiteProximo = proximo ? proximo.inicio : html.length;
+    const trechoDepois = html.slice(atual.fim, Math.min(limiteProximo, atual.fim + 6000));
+    const trechoAntes = html.slice(Math.max(0, atual.inicio - 1200), atual.inicio);
 
-    if (nomeBloqueado(nome)) continue;
-    if (normalizarRtp(nome)) continue;
+    let textoDepois = stripTags(trechoDepois);
+    let textoAntes = stripTags(trechoAntes);
 
-    let rtp = '';
+    let rtp = normalizarRtp(textoDepois);
 
-    for (let j = i + 1; j <= i + 10 && j < linhas.length; j++) {
-      const proxima = limparTexto(linhas[j]);
-      const achou = normalizarRtp(proxima);
-
-      if (achou) {
-        rtp = achou;
-        break;
+    if (!rtp) {
+      const matchesAntes = [...textoAntes.matchAll(/\b([0-9]{1,3})%\b/g)].map(m => m[0]);
+      if (matchesAntes.length) {
+        rtp = normalizarRtp(matchesAntes[matchesAntes.length - 1]);
       }
-
-      const diretoProx = tentarExtrairDaLinha(proxima);
-      if (diretoProx) break;
     }
 
     if (!rtp) continue;
 
-    const key = normalizarChave(nome);
-
     itens.push({
-      nome,
-      imagem: imagens.get(key) || imagemPadrao(itens.length + 1),
+      nome: atual.nome,
+      imagem: atual.imagem,
       rtp,
       atualizado_em: new Date().toISOString(),
       fonte: fonteNome
@@ -214,8 +183,8 @@ function extrairPorLinhas(linhas, imagens, fonteNome) {
   return removerDuplicados(itens);
 }
 
-async function buscarPorcentagemFetch(fonte) {
-  console.log('SCRIPT V4 FETCH ATIVO');
+async function buscarPorcentagemHtmlBlocos(fonte) {
+  console.log('SCRIPT V5 BLOCOS ATIVO');
 
   const resposta = await fetch(fonte.url, {
     headers: {
@@ -231,16 +200,11 @@ async function buscarPorcentagemFetch(fonte) {
   }
 
   const html = await resposta.text();
-  const imagens = mapaImagensPorAlt(html);
-  const linhas = htmlParaLinhas(html);
-
   console.log(`HTML bytes: ${html.length}`);
-  console.log(`Linhas extraidas: ${linhas.length}`);
-  console.log(`Imagens por alt: ${imagens.size}`);
 
-  const resultado = extrairPorLinhas(linhas, imagens, fonte.nome);
+  const resultado = extrairPorBlocosHtml(html, fonte.nome);
 
-  console.log(`Amostra: ${resultado.slice(0, 5).map(x => `${x.nome} ${x.rtp}`).join(' | ')}`);
+  console.log(`Amostra: ${resultado.slice(0, 8).map(x => `${x.nome} ${x.rtp}`).join(' | ')}`);
 
   return resultado;
 }
@@ -317,8 +281,8 @@ try {
     try {
       console.log(`Tentando fonte: ${fonte.nome} - ${fonte.url}`);
 
-      if (fonte.tipo === 'porcentagem-fetch') {
-        resultado = await buscarPorcentagemFetch(fonte);
+      if (fonte.tipo === 'porcentagem-html-blocos') {
+        resultado = await buscarPorcentagemHtmlBlocos(fonte);
       } else if (fonte.tipo === 'pop555-puppeteer') {
         resultado = await buscarPop555Puppeteer(fonte);
       }
