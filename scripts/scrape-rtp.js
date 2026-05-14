@@ -16,12 +16,12 @@ function normalizarRtp(texto) {
   return `${numero}%`;
 }
 
-function removerDuplicados(lista) {
+function removerDuplicadosPorImagem(lista) {
   const vistos = new Set();
   const saida = [];
 
   for (const item of lista) {
-    const chave = item.imagem || item.nome;
+    const chave = item.imagem;
     if (!chave || vistos.has(chave)) continue;
     vistos.add(chave);
     saida.push(item);
@@ -45,10 +45,16 @@ let browser;
 try {
   console.log('Fonte ativa: POP555 PGSoft');
   console.log(`Abrindo: ${FONTE_RTP}`);
+  console.log('SCRIPT POP555 ORDEM V2 ATIVO');
 
   browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
   });
 
   const page = await browser.newPage();
@@ -57,7 +63,7 @@ try {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36'
   );
 
-  await page.setViewport({ width: 1366, height: 1600 });
+  await page.setViewport({ width: 1366, height: 2200 });
 
   await page.goto(FONTE_RTP, {
     waitUntil: 'networkidle2',
@@ -68,14 +74,14 @@ try {
     await new Promise(resolve => {
       let total = 0;
       const timer = setInterval(() => {
-        window.scrollBy(0, 900);
-        total += 900;
+        window.scrollBy(0, 1000);
+        total += 1000;
 
-        if (total >= document.body.scrollHeight + 2000) {
+        if (total >= document.body.scrollHeight + 3000) {
           clearInterval(timer);
           resolve();
         }
-      }, 120);
+      }, 100);
     });
 
     window.scrollTo(0, 0);
@@ -83,13 +89,7 @@ try {
 
   await page.waitForFunction(() => {
     const texto = document.body?.innerText || '';
-    const imgs = [...document.querySelectorAll('img')]
-      .filter(img => {
-        const src = img.currentSrc || img.src || img.getAttribute('data-src') || '';
-        return /pgsoft|POPBRA-PGSOFT|assets\/rtp/i.test(src);
-      });
-
-    return texto.includes('%') && imgs.length >= 20;
+    return (texto.match(/\b[0-9]{1,3}%\b/g) || []).length >= 20;
   }, { timeout: 45000 });
 
   const dados = await page.evaluate(() => {
@@ -105,71 +105,58 @@ try {
       return `${numero}%`;
     }
 
-    function pegarRtpPeloAncestral(img) {
-      let atual = img;
+    function normalizarSrc(src) {
+      if (!src) return '';
 
-      for (let i = 0; i < 9 && atual; i++) {
-        const texto = atual.innerText || '';
-        const rtp = normalizarRtp(texto);
-
-        if (rtp) return rtp;
-
-        atual = atual.parentElement;
+      try {
+        return new URL(src, location.href).href;
+      } catch {
+        return src;
       }
-
-      return '';
-    }
-
-    function pegarRtpPorOrdem(index) {
-      const candidatos = [...document.querySelectorAll(
-        '[id^="percent-txt"], .percent p, .percent, p, span, div'
-      )]
-        .map(el => normalizarRtp(el.innerText || el.textContent || ''))
-        .filter(Boolean);
-
-      return candidatos[index] || '';
     }
 
     const imagens = [...document.querySelectorAll('img')]
       .map((img, index) => {
-        const src =
+        const src = normalizarSrc(
           img.currentSrc ||
           img.src ||
           img.getAttribute('data-src') ||
           img.getAttribute('data-lazy-src') ||
-          '';
+          ''
+        );
 
-        return {
-          index,
-          src,
-          alt: limparTexto(img.alt || img.title || '')
-        };
+        const alt = limparTexto(
+          img.alt ||
+          img.title ||
+          img.getAttribute('aria-label') ||
+          ''
+        );
+
+        return { index, src, alt };
       })
-      .filter(item => /pgsoft|POPBRA-PGSOFT|assets\/rtp/i.test(item.src));
+      .filter(item => {
+        return item.src &&
+          /pgsoft|POPBRA-PGSOFT|assets\/rtp/i.test(item.src) &&
+          !/logo|favicon|icon/i.test(item.src);
+      });
 
-    return imagens.map((item, index) => {
-      const img = [...document.querySelectorAll('img')]
-        .filter(el => {
-          const src =
-            el.currentSrc ||
-            el.src ||
-            el.getAttribute('data-src') ||
-            el.getAttribute('data-lazy-src') ||
-            '';
-          return src === item.src;
-        })[0];
+    const rtpPeloTexto = (document.body.innerText || '')
+      .match(/\b([0-9]{1,3})%\b/g) || [];
 
-      const rtp = img ? (pegarRtpPeloAncestral(img) || pegarRtpPorOrdem(index)) : pegarRtpPorOrdem(index);
+    const rtps = rtpPeloTexto
+      .map(normalizarRtp)
+      .filter(Boolean);
 
-      return {
-        nome: item.alt || `Jogo PGSoft ${index + 1}`,
-        imagem: item.src,
-        rtp
-      };
-    }).filter(item => item.imagem && item.rtp);
+    console.log('DEBUG_BROWSER imagens=' + imagens.length + ' rtps=' + rtps.length);
+
+    return imagens.map((item, index) => ({
+      nome: item.alt || `Jogo PGSoft ${index + 1}`,
+      imagem: item.src,
+      rtp: rtps[index] || ''
+    })).filter(item => item.imagem && item.rtp);
   });
 
-  const resultado = removerDuplicados(
+  const resultado = removerDuplicadosPorImagem(
     dados
       .map((item, index) => ({
         nome: limparTexto(item.nome) || `Jogo PGSoft ${index + 1}`,
@@ -182,7 +169,7 @@ try {
   );
 
   console.log(`Jogos encontrados: ${resultado.length}`);
-  console.log(`Amostra: ${resultado.slice(0, 5).map(x => `${x.nome} ${x.rtp}`).join(' | ')}`);
+  console.log(`Amostra: ${resultado.slice(0, 8).map(x => `${x.nome} ${x.rtp}`).join(' | ')}`);
 
   if (resultado.length < 20) {
     const atual = carregarJsonAtual();
